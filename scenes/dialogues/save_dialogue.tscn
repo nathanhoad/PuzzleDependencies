@@ -9,7 +9,6 @@ margin_right = 823.973
 margin_bottom = 632.962
 rect_min_size = Vector2( 800, 600 )
 resizable = true
-dialog_text = "Blah"
 access = 2
 current_dir = "/Projects/Games/PuzzleDependencies"
 current_path = "/Projects/Games/PuzzleDependencies/"

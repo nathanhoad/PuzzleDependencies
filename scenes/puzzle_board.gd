@@ -1,9 +1,5 @@
 extends GraphEdit
 
-# TODO:
-# 	style for nodes (based on type? dialog, item, location, just a color picker?)
-# 	icons for dialogs
-
 
 const PuzzleNode = preload("res://scenes/puzzle_node.tscn")
 const SaveDialogue = preload("res://scenes/dialogues/save_dialogue.tscn")
@@ -77,6 +73,7 @@ func save_changes_if_needed_and_continue():
 
 
 func empty_project() -> void:
+	next_node_id = 0
 	file_path = ""
 	for connection in get_connection_list():
 		disconnect_node(connection.get("from"), connection.get("from_port"), connection.get("to"), connection.get("to_port"))
@@ -88,11 +85,15 @@ func empty_project() -> void:
 func save_file():
 	yield(get_tree(), "idle_frame")
 	
+	var save_file_path = ""
 	if file_path == "":
 		var save_dialogue = SaveDialogue.instance()
 		add_child(save_dialogue)
 		save_dialogue.choose_file()
-		file_path = yield(save_dialogue, "file_chosen")
+		save_file_path = yield(save_dialogue, "file_chosen")
+	
+	if save_file_path == "":
+		return
 		
 	if not file_path.ends_with(".puzzles"):
 		file_path = file_path + ".puzzles"
@@ -170,12 +171,10 @@ func _on_ContextMenu_id_pressed(id) -> void:
 		
 		GraphContextMenu.ITEM_OPEN:
 			if yield(save_changes_if_needed_and_continue(), "completed"):
-				print("opening!")
 				open_file()
 		
 		GraphContextMenu.ITEM_SAVE:
-			if yield(save_changes_if_needed_and_continue(), "completed"):
-				save_file()
+			save_file()
 		
 		GraphContextMenu.ITEM_QUIT:
 			if yield(save_changes_if_needed_and_continue(), "completed"):

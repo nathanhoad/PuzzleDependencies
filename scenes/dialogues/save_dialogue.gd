@@ -30,4 +30,5 @@ func _on_SaveDialog_confirmed():
 
 
 func _on_SaveDialog_popup_hide():
+	emit_signal("file_chosen", "")
 	queue_free()
