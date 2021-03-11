@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://scenes/dialogues/save_dialogue.gd" type="Script" id=1]
+
+[node name="SaveDialog" type="FileDialog"]
+margin_left = 23.9726
+margin_top = 32.9625
+margin_right = 823.973
+margin_bottom = 632.962
+rect_min_size = Vector2( 800, 600 )
+resizable = true
+dialog_text = "Blah"
+access = 2
+current_dir = "/Projects/Games/PuzzleDependencies"
+current_path = "/Projects/Games/PuzzleDependencies/"
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="confirmed" from="." to="." method="_on_SaveDialog_confirmed"]
+[connection signal="file_selected" from="." to="." method="_on_SaveDialog_file_selected"]
+[connection signal="popup_hide" from="." to="." method="_on_SaveDialog_popup_hide"]

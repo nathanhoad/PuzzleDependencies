@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://scenes/dialogues/open_dialogue.gd" type="Script" id=1]
+
+[node name="OpenDialog" type="FileDialog"]
+margin_left = 2.99622
+margin_top = 1.49828
+margin_right = 802.996
+margin_bottom = 601.499
+rect_min_size = Vector2( 800, 600 )
+window_title = "Open a File"
+resizable = true
+dialog_hide_on_ok = true
+mode = 0
+access = 2
+filters = PoolStringArray( "*.puzzles ; Puzzle Depency Graphs" )
+current_dir = "/Projects/Games/PuzzleDependencies"
+current_path = "/Projects/Games/PuzzleDependencies/"
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="confirmed" from="." to="." method="_on_OpenDialog_confirmed"]
+[connection signal="file_selected" from="." to="." method="_on_OpenDialog_file_selected"]
+[connection signal="popup_hide" from="." to="." method="_on_OpenDialog_popup_hide"]
