@@ -10,6 +10,7 @@ margin_bottom = 632.962
 rect_min_size = Vector2( 800, 600 )
 resizable = true
 access = 2
+filters = PoolStringArray( "*.puzzles ; Puzzle Depency Graphs" )
 current_dir = "/Projects/Games/PuzzleDependencies"
 current_path = "/Projects/Games/PuzzleDependencies/"
 script = ExtResource( 1 )

@@ -1,11 +1,13 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://scenes/dialogues/unsaved_changes_dialogue.gd" type="Script" id=1]
+[ext_resource path="res://theme.tres" type="Theme" id=2]
 
 [node name="UnsavedChangesDialog" type="WindowDialog"]
 margin_right = 400.0
 margin_bottom = 100.0
 rect_min_size = Vector2( 400, 100 )
+theme = ExtResource( 2 )
 popup_exclusive = true
 window_title = "You have unsaved changes"
 script = ExtResource( 1 )
@@ -42,7 +44,7 @@ scroll_active = false
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 margin_top = 34.0
 margin_right = 360.0
-margin_bottom = 64.0
+margin_bottom = 60.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -51,21 +53,21 @@ __meta__ = {
 
 [node name="Save" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 margin_right = 136.0
-margin_bottom = 30.0
+margin_bottom = 26.0
 size_flags_horizontal = 3
-text = "Save them"
+text = "Save changes"
 
 [node name="Discard" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 margin_left = 140.0
 margin_right = 276.0
-margin_bottom = 30.0
+margin_bottom = 26.0
 size_flags_horizontal = 3
 text = "Discard them"
 
 [node name="Cancel" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 margin_left = 280.0
 margin_right = 360.0
-margin_bottom = 30.0
+margin_bottom = 26.0
 rect_min_size = Vector2( 80, 0 )
 text = "Cancel"
 

@@ -1,26 +1,39 @@
 extends GraphEdit
 
 
+const ContextMenu = preload("res://scenes/menus/context_menu.tscn")
 const PuzzleNode = preload("res://scenes/puzzle_node.tscn")
 const SaveDialogue = preload("res://scenes/dialogues/save_dialogue.tscn")
 const OpenDialogue = preload("res://scenes/dialogues/open_dialogue.tscn")
 const UnsavedChangesDialogue = preload("res://scenes/dialogues/unsaved_changes_dialogue.tscn")
-
-
-onready var context_menu : PopupMenu = $ContextMenu
+const Toast = preload("res://scenes/dialogues/toast.tscn")
 
 
 var next_node_id : int = 0
 var nodes : Dictionary = {}
 var file_path: String = ""
 var has_changed: bool = false
-var unsaved_changes_action = "quit"
 
 
 func _ready() -> void:
 	get_tree().set_auto_accept_quit(false)
 	add_valid_connection_type(0, 0)
 	empty_project()
+
+
+func _process(delta) -> void:
+	if Input.is_action_just_pressed("ui_new_default_node"):
+		add_node(get_viewport().get_mouse_position())
+	if Input.is_action_just_pressed("ui_new"):
+		empty_project()
+	if Input.is_action_just_pressed("ui_open"):
+		open_file()
+	if Input.is_action_just_pressed("ui_save"):
+		save_file()
+	
+	if Input.is_action_just_pressed("ui_quit"):
+		if yield(save_changes_if_needed_and_continue(), "completed"):
+			get_tree().quit()
 
 
 func _notification(what) -> void:
@@ -35,23 +48,27 @@ func get_next_node_id() -> String:
 	return id
 
 
-func add_node(position: Vector2, id: String = "", text: String = "") -> String:
-	if id == "":
-		id = get_next_node_id()
+func add_node(position: Vector2, data: Dictionary = {}):
 	var puzzle_node = PuzzleNode.instance()
-	puzzle_node.offset = position
-	puzzle_node.name = id
-	puzzle_node.connect("close_request", self, "_on_PuzzleNode_close_request", [id])
-	nodes[id] = puzzle_node
+	puzzle_node.graph = self
+	
+	if data.size() == 0:
+		puzzle_node.name = get_next_node_id()
+		puzzle_node.offset = position
+	else:
+		puzzle_node.name = data.get("id")
+		puzzle_node.deserialize(data)
+		
+	puzzle_node.connect("close_request", self, "_on_PuzzleNode_close_request", [puzzle_node.name])
+	puzzle_node.connect("disconnected_left", self, "_on_PuzzleNode_disconnected_left", [puzzle_node.name])
+	puzzle_node.connect("disconnected_right", self, "_on_PuzzleNode_disconnected_right", [puzzle_node.name])
+	nodes[puzzle_node.name] = puzzle_node
 	add_child(puzzle_node)
 	set_selected(puzzle_node)
 	
-	if text != "":
-		puzzle_node.text_edit.text = text
-	
 	has_changed = true
 	
-	return id
+	return puzzle_node
 
 
 func save_changes_if_needed_and_continue():
@@ -80,6 +97,9 @@ func empty_project() -> void:
 	for node in nodes.values():
 		node.queue_free()
 	nodes.clear()
+	for node in get_children():
+		if node is GraphNode:
+			node.queue_free()
 
 
 func save_file():
@@ -92,11 +112,12 @@ func save_file():
 		save_dialogue.choose_file()
 		save_file_path = yield(save_dialogue, "file_chosen")
 	
-	if save_file_path == "":
-		return
+		if save_file_path == "":
+			return
 		
-	if not file_path.ends_with(".puzzles"):
-		file_path = file_path + ".puzzles"
+		file_path = save_file_path
+		
+	Settings.reopen_file = file_path
 	
 	var data : Dictionary = {
 		"next_node_id": next_node_id,
@@ -121,17 +142,25 @@ func save_file():
 	file.close()
 	
 	has_changed = false
+	
+	var toast = Toast.instance()
+	toast.global_position = Vector2(20, OS.get_window_safe_area().size.y)
+	add_child(toast)
 
 
-func open_file() -> void:
-	var open_dialogue = OpenDialogue.instance()
-	add_child(open_dialogue)
-	open_dialogue.choose_file()
-	var open_file_path = yield(open_dialogue, "file_chosen")
+func open_file(open_file_path: String = "") -> void:
+	yield(get_tree(), "idle_frame")
+	
+	if open_file_path == "":
+		var open_dialogue = OpenDialogue.instance()
+		add_child(open_dialogue)
+		open_dialogue.choose_file()
+		open_file_path = yield(open_dialogue, "file_chosen")
 	
 	var file = File.new()
 	if open_file_path != "" and file.file_exists(open_file_path):
 		empty_project()
+		yield(get_tree(), "idle_frame")
 		
 		file_path = open_file_path
 		
@@ -139,10 +168,12 @@ func open_file() -> void:
 		var data = parse_json(file.get_as_text())
 		file.close()
 		
+		Settings.reopen_file = file_path
+		
 		next_node_id = data.get("next_node_id")
 		for serialized_node in data.get("nodes"):
 			var offset = Vector2(serialized_node.get("x"), serialized_node.get("y"))
-			add_node(offset, serialized_node.get("id"), serialized_node.get("text"))
+			add_node(offset, serialized_node)
 		
 		for serialized_connection in data.get("connections"):
 			connect_node(serialized_connection.get("from"), 0, serialized_connection.get("to"), 0)
@@ -156,30 +187,52 @@ func open_file() -> void:
 
 
 func _on_PuzzleBoard_popup_request(position) -> void:
-	context_menu.rect_position = position
-	context_menu.popup()
-
-
-func _on_ContextMenu_id_pressed(id) -> void:	
+	var menu = ContextMenu.instance()
+	add_child(menu)
+	menu.rect_position = position
+	menu.popup()
+	
+	var id = yield(menu, "id_pressed")
 	match id:
-		GraphContextMenu.ITEM_NEW_NODE:
-			add_node(scroll_offset + context_menu.rect_position)
+		menu.ITEM_NEW_DEFAULT_NODE:
+			var node = add_node(scroll_offset + position)
+			node.select_color(Constants.COLOR_DEFAULT)
 		
-		GraphContextMenu.ITEM_NEW:
+		menu.ITEM_NEW_RED_NODE:
+			var node = add_node(scroll_offset + position)
+			node.select_color(Constants.COLOR_RED)
+		
+		menu.ITEM_NEW_YELLOW_NODE:
+			var node = add_node(scroll_offset + position)
+			node.select_color(Constants.COLOR_YELLOW)
+		
+		menu.ITEM_NEW_BLUE_NODE:
+			var node = add_node(scroll_offset + position)
+			node.select_color(Constants.COLOR_BLUE)
+		
+		menu.ITEM_NEW_GREEN_NODE:
+			var node = add_node(scroll_offset + position)
+			node.select_color(Constants.COLOR_GREEN)
+		
+		menu.ITEM_NEW:
 			if yield(save_changes_if_needed_and_continue(), "completed"):
 				empty_project()
 		
-		GraphContextMenu.ITEM_OPEN:
+		menu.ITEM_OPEN:
 			if yield(save_changes_if_needed_and_continue(), "completed"):
 				open_file()
 		
-		GraphContextMenu.ITEM_SAVE:
+		menu.ITEM_REOPEN:
+			if yield(save_changes_if_needed_and_continue(), "completed"):
+				open_file(Settings.reopen_file)
+		
+		menu.ITEM_SAVE:
 			save_file()
 		
-		GraphContextMenu.ITEM_QUIT:
+		menu.ITEM_QUIT:
 			if yield(save_changes_if_needed_and_continue(), "completed"):
 				get_tree().quit()
-
+	
 
 func _on_PuzzleBoard_connection_request(from, from_slot, to, to_slot) -> void:
 	connect_node(from, from_slot, to, to_slot)
@@ -201,19 +254,35 @@ func _on_PuzzleNode_close_request(id: String) -> void:
 	has_changed = true
 
 
+func _on_PuzzleNode_disconnected_left(id: String) -> void:
+	for connection in get_connection_list():
+		var from = connection.get("from")
+		var to = connection.get("to")
+		if to == id:
+			disconnect_node(from, 0, to, 0)
+
+
+func _on_PuzzleNode_disconnected_right(id: String) -> void:
+	for connection in get_connection_list():
+		var from = connection.get("from")
+		var to = connection.get("to")
+		if from == id:
+			disconnect_node(from, 0, to, 0)
+
+
 func _on_PuzzleBoard_disconnection_request(from, from_slot, to, to_slot) -> void:
 	disconnect_node(from, from_slot, to, to_slot)
 	has_changed = true
 	
 
 func _on_PuzzleBoard_connection_from_empty(to, to_slot, release_position):
-	var id = add_node(scroll_offset + release_position)
-	connect_node(id, 0, to, to_slot)
+	var node = add_node(scroll_offset + release_position - Vector2(256, 45))
+	connect_node(node.name, 0, to, to_slot)
 
 
 func _on_PuzzleBoard_connection_to_empty(from, from_slot, release_position) -> void:
-	var id = add_node(scroll_offset + release_position)
-	connect_node(from, from_slot, id, 0)
+	var node = add_node(scroll_offset + release_position - Vector2(0, 45))
+	connect_node(from, from_slot, node.name, 0)
 
 
 func _on_PuzzleBoard__end_node_move():

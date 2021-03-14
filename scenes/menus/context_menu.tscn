@@ -7,3 +7,5 @@ margin_right = 20.0
 margin_bottom = 20.0
 mouse_default_cursor_shape = 2
 script = ExtResource( 1 )
+
+[connection signal="popup_hide" from="." to="." method="_on_ContextMenu_popup_hide"]

@@ -1,17 +1,16 @@
 [gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://scenes/puzzle_board.gd" type="Script" id=1]
-[ext_resource path="res://scenes/menus/context_menu.tscn" type="PackedScene" id=2]
+[ext_resource path="res://theme.tres" type="Theme" id=3]
 
 [node name="PuzzleBoard" type="GraphEdit"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+theme = ExtResource( 3 )
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-
-[node name="ContextMenu" parent="." instance=ExtResource( 2 )]
 
 [connection signal="_end_node_move" from="." to="." method="_on_PuzzleBoard__end_node_move"]
 [connection signal="connection_from_empty" from="." to="." method="_on_PuzzleBoard_connection_from_empty"]
@@ -19,4 +18,3 @@ __meta__ = {
 [connection signal="connection_to_empty" from="." to="." method="_on_PuzzleBoard_connection_to_empty"]
 [connection signal="disconnection_request" from="." to="." method="_on_PuzzleBoard_disconnection_request"]
 [connection signal="popup_request" from="." to="." method="_on_PuzzleBoard_popup_request"]
-[connection signal="id_pressed" from="ContextMenu" to="." method="_on_ContextMenu_id_pressed"]
