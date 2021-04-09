@@ -10,10 +10,11 @@ config_version=4
 
 [application]
 
-config/name="Puzzle Dependencies"
+config/name="Puzzle Key"
+config/description="Visualise your puzzle dependencies"
 run/main_scene="res://scenes/main.tscn"
 boot_splash/image="res://splash.png"
-boot_splash/bg_color=Color( 0.0666667, 0.0470588, 0.172549, 1 )
+boot_splash/bg_color=Color( 0.262745, 0.282353, 0.294118, 1 )
 config/icon="res://icon.png"
 config/windows_native_icon="res://icon.ico"
 
@@ -26,6 +27,7 @@ Settings="*res://helpers/settings.gd"
 
 window/size/width=1920
 window/size/height=1080
+window/dpi/allow_hidpi=true
 
 [gui]
 

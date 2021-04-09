@@ -19,6 +19,8 @@ func _ready() -> void:
 	get_tree().set_auto_accept_quit(false)
 	add_valid_connection_type(0, 0)
 	empty_project()
+	
+	OS.center_window()
 
 
 func _process(delta) -> void:
@@ -34,12 +36,37 @@ func _process(delta) -> void:
 	if Input.is_action_just_pressed("ui_quit"):
 		if yield(save_changes_if_needed_and_continue(), "completed"):
 			get_tree().quit()
+	
+	set_window_title()
 
 
 func _notification(what) -> void:
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
 		if yield(save_changes_if_needed_and_continue(), "completed"):
 			get_tree().quit()
+
+
+func _input(event: InputEvent) -> void:
+	# Handle ctrl + mouse wheel
+	if event is InputEventMouseButton:
+		event = event as InputEventMouseButton
+		if event.pressed and Input.is_key_pressed(KEY_CONTROL):
+			event.pressed = false
+			match event.button_index:
+				BUTTON_WHEEL_UP:
+					zoom += 0.1
+				BUTTON_WHEEL_DOWN:
+					zoom -= 0.1
+
+
+func set_window_title() -> void:
+	var suffix = ""
+	if has_changed:
+		suffix = "*"
+	var file = ""
+	if file_path != "":
+		file = " - " + file_path.get_file()
+	OS.set_window_title("Puzzle Key" + file + suffix)
 
 
 func get_next_node_id() -> String:

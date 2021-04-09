@@ -28,6 +28,8 @@ func _ready() -> void:
 	text_menu.add_separator()
 	text_menu.add_item("Disconnect all left", 1000)
 	text_menu.add_item("Disconnect all right", 1001)
+	text_menu.add_separator()
+	text_menu.add_item("Delete node", 2000)
 	
 	text_menu.connect("id_pressed", self, "_on_text_menu_id_pressed")
 
@@ -84,3 +86,5 @@ func _on_text_menu_id_pressed(id: int) -> void:
 		emit_signal("disconnected_left")
 	elif id == 1001:
 		emit_signal("disconnected_right")
+	elif id == 2000:
+		emit_signal("close_request")
