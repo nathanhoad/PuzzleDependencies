@@ -27,9 +27,11 @@ func _process(delta) -> void:
 	if Input.is_action_just_pressed("ui_new_default_node"):
 		add_node(get_viewport().get_mouse_position())
 	if Input.is_action_just_pressed("ui_new"):
-		empty_project()
+		if yield(save_changes_if_needed_and_continue(), "completed"):
+			empty_project()
 	if Input.is_action_just_pressed("ui_open"):
-		open_file()
+		if yield(save_changes_if_needed_and_continue(), "completed"):
+			open_file()
 	if Input.is_action_just_pressed("ui_save"):
 		save_file()
 	
@@ -81,7 +83,7 @@ func add_node(position: Vector2, data: Dictionary = {}):
 	
 	if data.size() == 0:
 		puzzle_node.name = get_next_node_id()
-		puzzle_node.offset = position
+		puzzle_node.offset = position * 1 / zoom
 	else:
 		puzzle_node.name = data.get("id")
 		puzzle_node.deserialize(data)
@@ -103,7 +105,7 @@ func save_changes_if_needed_and_continue():
 	
 	if has_changed:
 		var unsaved_changes_dialogue = UnsavedChangesDialogue.instance()
-		add_child(unsaved_changes_dialogue)
+		get_tree().current_scene.add_child(unsaved_changes_dialogue)
 		unsaved_changes_dialogue.ask_to_save_changes()
 		var response = yield(unsaved_changes_dialogue, "button_pressed")
 		match response:
@@ -135,7 +137,7 @@ func save_file():
 	var save_file_path = ""
 	if file_path == "":
 		var save_dialogue = SaveDialogue.instance()
-		add_child(save_dialogue)
+		get_tree().current_scene.add_child(save_dialogue)
 		save_dialogue.choose_file()
 		save_file_path = yield(save_dialogue, "file_chosen")
 	
@@ -172,7 +174,7 @@ func save_file():
 	
 	var toast = Toast.instance()
 	toast.global_position = Vector2(20, OS.get_window_safe_area().size.y)
-	add_child(toast)
+	get_tree().current_scene.add_child(toast)
 
 
 func open_file(open_file_path: String = "") -> void:
@@ -180,7 +182,7 @@ func open_file(open_file_path: String = "") -> void:
 	
 	if open_file_path == "":
 		var open_dialogue = OpenDialogue.instance()
-		add_child(open_dialogue)
+		get_tree().current_scene.add_child(open_dialogue)
 		open_dialogue.choose_file()
 		open_file_path = yield(open_dialogue, "file_chosen")
 	
@@ -215,7 +217,7 @@ func open_file(open_file_path: String = "") -> void:
 
 func _on_PuzzleBoard_popup_request(position) -> void:
 	var menu = ContextMenu.instance()
-	add_child(menu)
+	get_tree().current_scene.add_child(menu)
 	menu.rect_position = position
 	menu.popup()
 	
@@ -303,12 +305,12 @@ func _on_PuzzleBoard_disconnection_request(from, from_slot, to, to_slot) -> void
 	
 
 func _on_PuzzleBoard_connection_from_empty(to, to_slot, release_position):
-	var node = add_node(scroll_offset + release_position - Vector2(256, 45))
+	var node = add_node(scroll_offset + release_position - Vector2(256, 45) * zoom)
 	connect_node(node.name, 0, to, to_slot)
 
 
 func _on_PuzzleBoard_connection_to_empty(from, from_slot, release_position) -> void:
-	var node = add_node(scroll_offset + release_position - Vector2(0, 45))
+	var node = add_node(scroll_offset + release_position - Vector2(0, 45) * zoom)
 	connect_node(from, from_slot, node.name, 0)
 
 
